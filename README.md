@@ -39,7 +39,7 @@ Details: [docs/architecture.md](docs/architecture.md).
 
 ## Install
 
-Requires a local [aura](../aura) ≥ 0.1.27 and `cargo`.
+Requires a local [aura](../aura) build with interactive plugin controls, and `cargo`.
 
 ```bash
 ./install.sh          # build + register with aura + CLI symlink

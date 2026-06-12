@@ -1,7 +1,7 @@
 ---
 title: Panel UI
 status: stable
-version: 0.2.0
+version: 0.1.0
 last_updated: 2026-06-12
 source_refs:
   - src/panel.rs
@@ -13,8 +13,8 @@ tags: [ui, docs]
 # Panel UI
 
 The aura modal shows an **Audio Hooks** pill (purple speaker icon).
-The panel uses aura's interactive `controls` sections (aura ≥ 0.1.27)
-— every operation is clickable; nothing requires the terminal.
+The panel uses aura's interactive `controls` sections — every
+operation is clickable; nothing requires the terminal.
 
 ## Agents tab
 

@@ -1,6 +1,6 @@
 //! The aura plugin panel. Sections "Agents" and "Profiles" are
-//! interactive (`type: "controls"` — requires aura >= 0.1.27 for the
-//! `indent`/`icon`/`confirm` capabilities used here); every
+//! interactive (`type: "controls"` — requires an aura build with the
+//! `indent`/`icon`/`confirm` button capabilities); every
 //! operation the CLI offers is reachable from the panel buttons. See
 //! `actions.rs` for the id grammar.
 
@@ -29,7 +29,7 @@ fn button(id: String, label: &str, active: bool, danger: bool) -> Value {
 }
 
 /// Destructive pill: icon-only ✕ (or labeled), armed by the host until a
-/// second click confirms (`confirm` capability, aura >= 0.1.27).
+/// second click confirms (aura `confirm` button capability).
 fn danger_button(id: String, label: &str, confirm: &str) -> Value {
     json!({
         "id": id, "label": label, "active": false, "danger": true,

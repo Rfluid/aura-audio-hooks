@@ -1,7 +1,7 @@
 ---
 title: Technical stack
 status: current
-version: 0.2.0
+version: 0.1.0
 last_updated: 2026-06-12
 last_verified: 2026-06-12
 source_refs: [Cargo.toml]
@@ -17,8 +17,8 @@ tags: [context, architecture]
   runtime, no clap, no rand (xorshift seeded from clock+pid).
 - **Host protocol**: aura plugin wire contract — JSON panel on stdout,
   `action <id>` re-invocations for button clicks. Interactive `controls`
-  sections require **aura ≥ 0.1.27** (`indent`, `icon`, `confirm`
-  capabilities; plain controls landed in 0.1.26).
+  sections require an aura build with the `indent`/`icon`/`confirm`
+  button capabilities (see `../aura/docs/plugin-authoring.md`).
 - **External tools** (runtime, optional): `ffplay`/`pw-play`/`paplay`/
   `mpv` for playback; `zenity`/`kdialog` for native pickers.
 - **Files touched**: own config (`~/.config/aura-audio-hooks/config.toml`),
