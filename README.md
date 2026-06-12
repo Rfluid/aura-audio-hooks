@@ -52,7 +52,42 @@ Have existing inline audio hooks (`ffplay … | shuf` style)? Adopt them:
 aura-plugin-audio-hooks import Peh --profile coder-tags
 ```
 
-Remove with `./uninstall.sh` (add `--purge` to also delete profiles).
+## Updating
+
+From the checkout, pull and reinstall:
+
+```bash
+git pull
+just update           # = just uninstall + just install
+just update --link    # same, but dev-mode symlink install
+```
+
+`uninstall` runs first so nothing stale survives — the old binary,
+icon, sidecar, aura registration, and CLI symlink are all removed
+before the fresh build is registered. **Your profiles and config are
+preserved** (`~/.config/aura-audio-hooks/`), but agent hook entries
+are removed and re-installed, so re-enable profiles per agent from
+the panel (or `aura-plugin-audio-hooks use <agent> <profile>`).
+
+If you installed with `--link`, you usually don't need any of this:
+the plugin runs from `target/release`, so `just build` alone makes
+rebuilds go live.
+
+## Uninstall
+
+```bash
+./uninstall.sh            # removes managed hook entries from agent
+                          # settings, deregisters from aura, deletes
+                          # the binary + icon + sidecar + CLI symlink
+./uninstall.sh --purge    # also deletes ~/.config/aura-audio-hooks
+                          # (profiles, agent mappings, mute state)
+```
+
+Only hook entries owned by this plugin are touched in agent
+`settings.json` files — every other hook is preserved (a one-time
+backup was written next to each `settings.json` on first edit).
+Without `--purge`, profiles and config survive for a future
+reinstall.
 
 ## Use
 
