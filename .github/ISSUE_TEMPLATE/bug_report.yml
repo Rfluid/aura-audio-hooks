@@ -1,0 +1,194 @@
+name: Bug report
+description: Report a bug, regression, or platform compatibility issue in the Audio Hooks plugin.
+title: "<area>(<platform>): <one-line symptom>"
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug! A few notes before you start:
+
+        - **Search existing issues first**: <https://github.com/Rfluid/aura-audio-hooks/issues?q=is%3Aissue>. Comment on an existing thread instead of opening a duplicate.
+        - **Title format**: `<area>(<platform>): <one-line symptom>` — e.g. `play(linux): Stop event picks the same file every time`. Mirrors the commit-message convention.
+        - **Don't paste secrets**: agent `settings.json` files can contain more than hooks — paste only the relevant `hooks` entries. Redact agent-profile names if you'd rather not share them.
+        - **Host bugs belong upstream**: if the tray, modal, or plugin loading itself misbehaves, that's an [aura](https://github.com/Rfluid/aura/issues) issue, not an Audio Hooks one.
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: One or two sentences describing the bug. Lead with the symptom, not the suspected cause.
+      placeholder: "Switching an agent's profile from the panel works, but the Stop event keeps playing sounds from the previous profile's folder."
+    validations:
+      required: true
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      description: Pick the OS family. Specific desktop / audio stack goes in the next fields.
+      options:
+        - Linux
+        - macOS
+        - Windows
+    validations:
+      required: true
+
+  - type: input
+    id: os_version
+    attributes:
+      label: OS / kernel version
+      description: e.g. `Fedora 40 (kernel 6.9.4)`, `Ubuntu 24.04`, `macOS 14.5`, `Windows 11 23H2`.
+      placeholder: "Fedora 40, kernel 6.9.4-200.fc40.x86_64"
+    validations:
+      required: true
+
+  - type: input
+    id: audio_player
+    attributes:
+      label: Audio player used
+      description: |
+        The plugin auto-detects a player (`ffplay`, `pw-play`, `paplay`, `mpv`, `aplay`, `afplay`, `ogg123`) unless `player` is set in `config.toml`. Mention which one is in play and whether you overrode it.
+      placeholder: "ffplay (auto-detected) — `which ffplay` resolves to /usr/bin/ffplay"
+    validations:
+      required: false
+
+  - type: input
+    id: plugin_version
+    attributes:
+      label: Plugin version
+      description: The release tag you installed, or the commit you built from (`git rev-parse --short HEAD` in your checkout).
+      placeholder: "v0.1.0 (or commit f42e68e)"
+    validations:
+      required: true
+
+  - type: input
+    id: aura_version
+    attributes:
+      label: Aura version
+      description: Output of `aura --version` for the host this plugin is registered with.
+      placeholder: "aura 0.1.8"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: install_method
+    attributes:
+      label: Install method
+      description: How did you get the plugin onto the machine?
+      options:
+        - ./install.sh (copy install)
+        - ./install.sh --link (dev symlink install)
+        - Built manually (cargo build + aura plugin add …)
+        - GitHub Releases archive
+        - Other (describe below)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Which part of the plugin is affected? Pick the closest match; you can elaborate in the steps section.
+      options:
+        - Installer / uninstaller scripts
+        - Hook install / removal (agent settings.json editing)
+        - Import of existing inline audio hooks
+        - Playback (play subcommand, player detection, file selection)
+        - Global mute / unmute
+        - Panel UI / button actions (aura plugin panel)
+        - Path picker dialogs (zenity / kdialog)
+        - CLI subcommands
+        - Configuration (config.toml parsing or layout)
+        - Other (describe below)
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Numbered list. Start from a clean state if you can ("after a fresh ./install.sh with no existing config.toml…").
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      placeholder: "A random file from the profile's Stop folder should play once the agent finishes."
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      placeholder: "Nothing plays. Running the hook command manually exits 0 silently."
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / command output
+      description: |
+        Paste the most relevant captures. Useful sources:
+        - `aura-plugin-audio-hooks status` — resolved agents, profiles, and mute state.
+        - Run the exact hook command by hand, e.g. `aura-plugin-audio-hooks play --agent <name> --event Stop` (note: `play` is silent on soft failures by design — mention if it exits 0 with no sound).
+        - The relevant `[profiles.*]` / `[agents]` sections of `~/.config/aura-audio-hooks/config.toml`.
+        - The plugin's `hooks` entries from the affected agent's `settings.json` (only the entries containing `aura-plugin-audio-hooks`).
+        Use fenced code blocks (triple backticks) so output stays formatted.
+      render: text
+      placeholder: |
+        $ aura-plugin-audio-hooks status
+        muted = false
+        Peh -> coder-tags
+        ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: regression
+    attributes:
+      label: Was it ever working?
+      description: If yes, what changed around the time it broke? (plugin update, aura update, OS update, audio stack change, etc.) If you can name the last known good version, please do.
+      placeholder: "Worked on 0.1.0 with the same setup. Broke after switching from PulseAudio to PipeWire."
+    validations:
+      required: false
+
+  - type: textarea
+    id: workarounds
+    attributes:
+      label: Workarounds tried
+      description: Anything you tried before filing — reinstall, re-import hooks, override `player` in config.toml, switch profiles, etc.
+      value: |
+        -
+        -
+    validations:
+      required: false
+
+  - type: textarea
+    id: hypothesis
+    attributes:
+      label: Possible cause / hypothesis
+      description: |
+        Optional. Only include if you have *evidence* — a stack trace pointing at a function, a `git bisect` result, a code path you read. Reference paths like `src/play.rs:104`. Speculation without evidence is fine to leave blank; the maintainers prefer "I don't know" over guesses.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: confirmations
+    attributes:
+      label: Pre-submission checklist
+      options:
+        - label: I searched [open and closed issues](https://github.com/Rfluid/aura-audio-hooks/issues?q=is%3Aissue) and this is not a duplicate (or it's a regression of a closed one — I'll mention the original below).
+          required: true
+        - label: The logs/output above contain only the plugin's own `hooks` entries from settings.json — no tokens, API keys, or other secrets.
+          required: true
+        - label: I'm reporting a bug in this plugin, not in the aura host and not a usage question.
+          required: true
