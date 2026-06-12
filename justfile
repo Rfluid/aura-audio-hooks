@@ -43,9 +43,20 @@ status:
 
 # ── Install ───────────────────────────────────────────────────────────────────
 
-# Build + register with aura (icon, name, color) + CLI symlink
-install:
-    ./install.sh
+# Build + register with aura (icon, name, color) + CLI symlink.
+# Pass installer flags after the recipe name, e.g. `just install --link`.
+install *args:
+    ./install.sh {{args}}
 
 uninstall:
     ./uninstall.sh
+
+# ── Update ────────────────────────────────────────────────────────────────────
+
+# Reinstall on top of an existing install. Runs `uninstall` first so the
+# previous binary, aura registration, and CLI symlink are removed — nothing
+# stale survives — then `install` lays down the fresh build and re-registers
+# with aura. Installer flags are forwarded, e.g. `just update --link`.
+update *args:
+    just uninstall
+    just install {{args}}
