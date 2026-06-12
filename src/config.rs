@@ -54,8 +54,8 @@ impl Config {
         if !path.exists() {
             return Ok(Self::default());
         }
-        let raw = fs::read_to_string(&path)
-            .with_context(|| format!("reading {}", path.display()))?;
+        let raw =
+            fs::read_to_string(&path).with_context(|| format!("reading {}", path.display()))?;
         toml::from_str(&raw).with_context(|| format!("parsing {}", path.display()))
     }
 
@@ -75,9 +75,7 @@ impl Config {
         if name == OFF {
             return None;
         }
-        self.profiles
-            .get(name)
-            .map(|p| (name.as_str(), p))
+        self.profiles.get(name).map(|p| (name.as_str(), p))
     }
 
     /// Union of event names across all profiles. Hooks are installed for

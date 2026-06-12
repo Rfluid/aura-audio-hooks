@@ -15,9 +15,8 @@ enum Tool {
 
 fn tool() -> Result<Tool> {
     let on_path = |bin: &str| {
-        std::env::var_os("PATH").is_some_and(|paths| {
-            std::env::split_paths(&paths).any(|dir| dir.join(bin).is_file())
-        })
+        std::env::var_os("PATH")
+            .is_some_and(|paths| std::env::split_paths(&paths).any(|dir| dir.join(bin).is_file()))
     };
     if on_path("zenity") {
         Ok(Tool::Zenity)

@@ -52,8 +52,7 @@ pub fn agents() -> Result<Vec<Agent>> {
     if !path.exists() {
         return Ok(Vec::new());
     }
-    let raw = fs::read_to_string(&path)
-        .with_context(|| format!("reading {}", path.display()))?;
+    let raw = fs::read_to_string(&path).with_context(|| format!("reading {}", path.display()))?;
     let cfg: AuraConfig =
         toml::from_str(&raw).with_context(|| format!("parsing {}", path.display()))?;
     Ok(cfg.agents)

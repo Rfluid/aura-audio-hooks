@@ -94,14 +94,13 @@ pub fn detect_player(config: &Config) -> Option<(String, &'static [&'static str]
 }
 
 fn on_path(bin: &str) -> bool {
-    std::env::var_os("PATH").is_some_and(|paths| {
-        std::env::split_paths(&paths).any(|dir| dir.join(bin).is_file())
-    })
+    std::env::var_os("PATH")
+        .is_some_and(|paths| std::env::split_paths(&paths).any(|dir| dir.join(bin).is_file()))
 }
 
 fn spawn_player(config: &Config, file: &Path) -> Result<()> {
-    let (player, args) =
-        detect_player(config).context("no audio player found (tried ffplay, pw-play, paplay, mpv)")?;
+    let (player, args) = detect_player(config)
+        .context("no audio player found (tried ffplay, pw-play, paplay, mpv)")?;
     let spawned = Command::new(&player)
         .args(args)
         .arg(file)

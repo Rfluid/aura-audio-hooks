@@ -140,6 +140,12 @@ fn set_event_source(
 
 fn sanitize_name(raw: &str) -> String {
     raw.chars()
-        .map(|c| if c == ':' || c.is_whitespace() { '-' } else { c })
+        .map(|c| {
+            if c == ':' || c.is_whitespace() {
+                '-'
+            } else {
+                c
+            }
+        })
         .collect()
 }

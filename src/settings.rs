@@ -28,15 +28,17 @@ pub struct Settings {
 impl Settings {
     pub fn load(path: &Path) -> Result<Self> {
         let root = if path.exists() {
-            let raw = fs::read_to_string(path)
-                .with_context(|| format!("reading {}", path.display()))?;
-            serde_json::from_str(&raw)
-                .with_context(|| format!("parsing {}", path.display()))?
+            let raw =
+                fs::read_to_string(path).with_context(|| format!("reading {}", path.display()))?;
+            serde_json::from_str(&raw).with_context(|| format!("parsing {}", path.display()))?
         } else {
             Value::Object(Map::new())
         };
         anyhow::ensure!(root.is_object(), "{} is not a JSON object", path.display());
-        Ok(Self { path: path.to_path_buf(), root })
+        Ok(Self {
+            path: path.to_path_buf(),
+            root,
+        })
     }
 
     /// Write the file back, keeping a one-time backup of the pre-plugin state.
@@ -53,8 +55,7 @@ impl Settings {
             fs::create_dir_all(dir)?;
         }
         let body = serde_json::to_string_pretty(&self.root)?;
-        fs::write(&self.path, body)
-            .with_context(|| format!("writing {}", self.path.display()))?;
+        fs::write(&self.path, body).with_context(|| format!("writing {}", self.path.display()))?;
         Ok(())
     }
 
@@ -72,12 +73,15 @@ impl Settings {
 
     /// Event names that currently carry a hook command managed by us.
     pub fn managed_events(&self) -> Vec<String> {
-        let Some(hooks) = self.hooks_obj() else { return Vec::new() };
+        let Some(hooks) = self.hooks_obj() else {
+            return Vec::new();
+        };
         hooks
             .iter()
             .filter(|(_, groups)| {
                 groups.as_array().is_some_and(|gs| {
-                    gs.iter().any(|g| group_commands(g).iter().any(|c| c.contains(MARKER)))
+                    gs.iter()
+                        .any(|g| group_commands(g).iter().any(|c| c.contains(MARKER)))
                 })
             })
             .map(|(event, _)| event.clone())
@@ -110,10 +114,7 @@ impl Settings {
                     continue;
                 };
                 inner.retain(|h| {
-                    let is_match = h
-                        .get("command")
-                        .and_then(Value::as_str)
-                        .is_some_and(&pred);
+                    let is_match = h.get("command").and_then(Value::as_str).is_some_and(&pred);
                     if is_match {
                         removed += 1;
                     }
@@ -149,11 +150,17 @@ impl Settings {
     /// Unmanaged hook commands that look like audio playback, as
     /// `(event, command)` pairs — candidates for `import`.
     pub fn audio_candidates(&self) -> Vec<(String, String)> {
-        const PLAYERS: &[&str] = &["ffplay", "pw-play", "paplay", "mpv", "aplay", "afplay", "ogg123"];
-        let Some(hooks) = self.hooks_obj() else { return Vec::new() };
+        const PLAYERS: &[&str] = &[
+            "ffplay", "pw-play", "paplay", "mpv", "aplay", "afplay", "ogg123",
+        ];
+        let Some(hooks) = self.hooks_obj() else {
+            return Vec::new();
+        };
         let mut out = Vec::new();
         for (event, groups) in hooks {
-            let Some(groups) = groups.as_array() else { continue };
+            let Some(groups) = groups.as_array() else {
+                continue;
+            };
             for group in groups {
                 for cmd in group_commands(group) {
                     if !cmd.contains(MARKER) && PLAYERS.iter().any(|p| cmd.contains(p)) {

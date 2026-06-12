@@ -105,12 +105,18 @@ fn run() -> Result<()> {
             let agent_name = one_arg(&args, "disable <agent>")?;
             let agent = aura::find_agent(&agent_name)?;
             let removed = ops::disable(&agent)?;
-            println!("removed {removed} hook entries from {}", agent.settings_path().display());
+            println!(
+                "removed {removed} hook entries from {}",
+                agent.settings_path().display()
+            );
             Ok(())
         }
         Some("import") => {
             let agent = one_arg(&args, "import <agent>")?;
-            anyhow::ensure!(!agent.starts_with('-'), "usage: import <agent> [--profile <name>]");
+            anyhow::ensure!(
+                !agent.starts_with('-'),
+                "usage: import <agent> [--profile <name>]"
+            );
             let profile = flag_value(&args, "--profile").unwrap_or_else(|| "imported".to_string());
             let mut config = Config::load()?;
             let outcome = ops::import(&mut config, &agent, &profile)?;
@@ -121,7 +127,10 @@ fn run() -> Result<()> {
             for (event, cmd) in &outcome.skipped {
                 println!("  skipped {event}: could not parse source from: {cmd}");
             }
-            println!("hooks installed for events: {}", outcome.events_installed.join(", "));
+            println!(
+                "hooks installed for events: {}",
+                outcome.events_installed.join(", ")
+            );
             Ok(())
         }
         Some("profile") => profile_cmd(&args[1..]),
@@ -189,24 +198,37 @@ fn status() -> Result<()> {
     println!("sound: {}", if config.muted { "MUTED" } else { "on" });
     println!(
         "player: {}",
-        play::detect_player(&config).map(|(p, _)| p).unwrap_or_else(|| "none found!".into())
+        play::detect_player(&config)
+            .map(|(p, _)| p)
+            .unwrap_or_else(|| "none found!".into())
     );
     println!("config: {}", paths::plugin_config_path().display());
     println!();
     for agent in aura::agents()? {
-        let profile = config.agents.get(&agent.name).cloned().unwrap_or_else(|| "—".into());
+        let profile = config
+            .agents
+            .get(&agent.name)
+            .cloned()
+            .unwrap_or_else(|| "—".into());
         let hooks = if !agent.supports_hooks() {
             "unsupported kind".to_string()
         } else {
             match settings::Settings::load(&agent.settings_path()) {
                 Ok(s) => {
                     let ev = s.managed_events();
-                    if ev.is_empty() { "no hooks installed".into() } else { format!("hooks: {}", ev.join(", ")) }
+                    if ev.is_empty() {
+                        "no hooks installed".into()
+                    } else {
+                        format!("hooks: {}", ev.join(", "))
+                    }
                 }
                 Err(e) => format!("unreadable settings: {e}"),
             }
         };
-        println!("{} ({}): profile={profile}  {hooks}", agent.name, agent.kind);
+        println!(
+            "{} ({}): profile={profile}  {hooks}",
+            agent.name, agent.kind
+        );
     }
     Ok(())
 }
@@ -220,11 +242,15 @@ fn set_muted(muted: bool) -> Result<()> {
 }
 
 fn flag_value(args: &[String], flag: &str) -> Option<String> {
-    args.iter().position(|a| a == flag).and_then(|i| args.get(i + 1).cloned())
+    args.iter()
+        .position(|a| a == flag)
+        .and_then(|i| args.get(i + 1).cloned())
 }
 
 fn one_arg(args: &[String], usage: &str) -> Result<String> {
-    args.get(1).cloned().with_context(|| format!("usage: {usage}"))
+    args.get(1)
+        .cloned()
+        .with_context(|| format!("usage: {usage}"))
 }
 
 fn two_args(args: &[String], usage: &str) -> Result<(String, String)> {

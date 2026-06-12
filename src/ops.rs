@@ -9,7 +9,9 @@ use crate::paths::self_invocation_path;
 use crate::settings::{extract_source, Settings};
 
 fn shell_quote(s: &str) -> String {
-    if s.chars().all(|c| c.is_ascii_alphanumeric() || "-_./".contains(c)) {
+    if s.chars()
+        .all(|c| c.is_ascii_alphanumeric() || "-_./".contains(c))
+    {
         s.to_string()
     } else {
         format!("'{}'", s.replace('\'', r#"'\''"#))
@@ -30,7 +32,11 @@ fn hook_command(agent: &str, event: &str) -> String {
 /// profiles later is config-only.
 pub fn enable(config: &Config, agent: &Agent) -> Result<Vec<String>> {
     if !agent.supports_hooks() {
-        bail!("agent '{}' has kind '{}'; only claude-code hooks are supported", agent.name, agent.kind);
+        bail!(
+            "agent '{}' has kind '{}'; only claude-code hooks are supported",
+            agent.name,
+            agent.kind
+        );
     }
     let events = config.all_events();
     if events.is_empty() {
@@ -77,7 +83,10 @@ pub fn use_profile(config: &mut Config, agent_name: &str, profile: &str) -> Resu
     let agent = aura::find_agent(agent_name)?;
     if profile != OFF && !config.profiles.contains_key(profile) {
         let known: Vec<_> = config.profiles.keys().map(String::as_str).collect();
-        bail!("unknown profile '{profile}' (profiles: {}, or 'off')", known.join(", "));
+        bail!(
+            "unknown profile '{profile}' (profiles: {}, or 'off')",
+            known.join(", ")
+        );
     }
     config.agents.insert(agent.name, profile.to_string());
     config.save()
@@ -96,7 +105,11 @@ pub struct ImportOutcome {
 pub fn import(config: &mut Config, agent_name: &str, profile_name: &str) -> Result<ImportOutcome> {
     let agent = aura::find_agent(agent_name)?;
     if !agent.supports_hooks() {
-        bail!("agent '{}' has kind '{}'; only claude-code hooks are supported", agent.name, agent.kind);
+        bail!(
+            "agent '{}' has kind '{}'; only claude-code hooks are supported",
+            agent.name,
+            agent.kind
+        );
     }
     let mut settings = Settings::load(&agent.settings_path())?;
     let candidates = settings.audio_candidates();
@@ -123,14 +136,13 @@ pub fn import(config: &mut Config, agent_name: &str, profile_name: &str) -> Resu
         bail!("found audio hooks but could not extract a source path from any of them");
     }
 
-    let profile = config
-        .profiles
-        .entry(profile_name.to_string())
-        .or_default();
+    let profile = config.profiles.entry(profile_name.to_string()).or_default();
     for (event, source) in &imported {
         profile.events.insert(event.clone(), source.clone());
     }
-    config.agents.insert(agent.name.clone(), profile_name.to_string());
+    config
+        .agents
+        .insert(agent.name.clone(), profile_name.to_string());
     config.save()?;
 
     // Remove exactly the raw commands we imported, nothing else.
@@ -138,5 +150,10 @@ pub fn import(config: &mut Config, agent_name: &str, profile_name: &str) -> Resu
     settings.save().context("removing imported raw hooks")?;
 
     let events_installed = enable(config, &agent)?;
-    Ok(ImportOutcome { profile: profile_name.to_string(), imported, skipped, events_installed })
+    Ok(ImportOutcome {
+        profile: profile_name.to_string(),
+        imported,
+        skipped,
+        events_installed,
+    })
 }
