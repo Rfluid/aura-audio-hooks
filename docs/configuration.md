@@ -35,8 +35,9 @@ muted = false
 # directory (a random audio file inside is picked per event) or a
 # single file (always played).
 [profiles.coder-tags.events]
-Stop         = "/home/me/Music/coder-tags/done"
-Notification = "/home/me/Music/coder-tags/input-needed"
+Stop         = "/home/me/Music/coder-tags/stop"
+Notification = "/home/me/Music/coder-tags/notification"  # "input-needed" also accepted (legacy)
+SubagentStop = "/home/me/Music/coder-tags/subagent-stop"  # fires per subagent, not per turn
 
 [profiles.minimal.events]
 Stop = "/home/me/Music/ding.ogg"
@@ -59,6 +60,11 @@ Personal = "minimal"
   uses it as a separator). Names created from the UI are sanitized.
 - Deleting a profile from the UI re-points agents that used it to
   `"off"`.
+- **Redelivered completions** (Claude Code can fire the same `Stop`/
+  `SubagentStop` completion more than once) are deduped by `play`
+  using the `agent_id`/`prompt_id` from the hook's stdin payload, so
+  each real completion plays exactly once — markers live under
+  `~/.config/aura-audio-hooks/state/` and expire after 24h.
 
 ## What is *not* here
 

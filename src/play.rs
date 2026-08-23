@@ -6,14 +6,20 @@
 
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use anyhow::{bail, Context, Result};
 
 use crate::config::Config;
-use crate::paths::expand_tilde;
+use crate::paths::{expand_tilde, state_dir};
 
 const AUDIO_EXTS: &[&str] = &["ogg", "mp3", "wav", "flac", "m4a", "opus", "aiff", "aac"];
+
+/// Claude Code can redeliver the same completion (observed:
+/// `SubagentStop` firing twice, seconds apart, for one subagent). Dedup
+/// markers older than this are pruned as stale rather than a real
+/// resend still in flight.
+const MARKER_MAX_AGE: Duration = Duration::from_secs(24 * 3600);
 
 /// Players we know how to drive, in preference order.
 const PLAYERS: &[(&str, &[&str])] = &[
@@ -24,6 +30,7 @@ const PLAYERS: &[(&str, &[&str])] = &[
 ];
 
 pub fn play(agent: &str, event: &str) -> Result<()> {
+    let payload = read_hook_payload();
     let config = Config::load()?;
     if config.muted {
         return Ok(());
@@ -34,11 +41,90 @@ pub fn play(agent: &str, event: &str) -> Result<()> {
     let Some(source) = profile.events.get(event) else {
         return Ok(());
     };
+    if already_handled(agent, event, payload.as_deref()) {
+        return Ok(());
+    }
     let file = match resolve_file(&expand_tilde(source)) {
         Some(f) => f,
         None => return Ok(()), // missing/empty source: stay silent in the hook path
     };
     spawn_player(&config, &file)
+}
+
+/// The JSON Claude Code sends on stdin for hook invocations — carries
+/// `agent_id`/`prompt_id`, which is what lets us tell a genuine resend
+/// of the same completion apart from a second, distinct one landing
+/// close in time. `is_terminal` guards against hanging when `play` is
+/// run by hand from a shell.
+fn read_hook_payload() -> Option<String> {
+    use std::io::{IsTerminal, Read};
+    if std::io::stdin().is_terminal() {
+        return None;
+    }
+    let mut buf = String::new();
+    std::io::stdin().read_to_string(&mut buf).ok()?;
+    (!buf.trim().is_empty()).then_some(buf)
+}
+
+/// Whether this exact completion was already handled. Keyed by the most
+/// specific id available in the hook payload — `agent_id` for
+/// `SubagentStop`, `prompt_id` for `Stop` — so two distinct completions
+/// landing close together are never confused with a resend of the same
+/// one, however far apart the resend arrives.
+fn already_handled(agent: &str, event: &str, payload: Option<&str>) -> bool {
+    let dir = state_dir();
+    let _ = std::fs::create_dir_all(&dir);
+    prune_stale_markers(&dir);
+
+    let key = dedup_key(payload).unwrap_or_else(|| sanitize(agent));
+    let marker = dir.join(format!("seen-{}-{}", sanitize(event), sanitize(&key)));
+    if marker.exists() {
+        return true;
+    }
+    let _ = std::fs::write(&marker, b"");
+    false
+}
+
+fn dedup_key(payload: Option<&str>) -> Option<String> {
+    let value: serde_json::Value = serde_json::from_str(payload?).ok()?;
+    value
+        .get("agent_id")
+        .or_else(|| value.get("prompt_id"))
+        .and_then(|v| v.as_str())
+        .map(str::to_string)
+}
+
+fn prune_stale_markers(dir: &Path) {
+    let Ok(entries) = std::fs::read_dir(dir) else {
+        return;
+    };
+    let now = SystemTime::now();
+    for entry in entries.flatten() {
+        let path = entry.path();
+        let is_marker = path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .is_some_and(|n| n.starts_with("seen-"));
+        if !is_marker {
+            continue;
+        }
+        let stale = entry
+            .metadata()
+            .and_then(|m| m.modified())
+            .is_ok_and(|modified| {
+                now.duration_since(modified)
+                    .is_ok_and(|age| age > MARKER_MAX_AGE)
+            });
+        if stale {
+            let _ = std::fs::remove_file(path);
+        }
+    }
+}
+
+fn sanitize(s: &str) -> String {
+    s.chars()
+        .map(|c| if c.is_ascii_alphanumeric() { c } else { '_' })
+        .collect()
 }
 
 /// Pick the file to play: the source itself, or a random audio file

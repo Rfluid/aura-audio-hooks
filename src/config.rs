@@ -7,8 +7,8 @@
 //! # player = "ffplay"            # optional override; auto-detected otherwise
 //!
 //! [profiles.coder-tags.events]
-//! Stop         = "~/Music/coder-tags/done"          # dir -> random pick
-//! Notification = "~/Music/coder-tags/input-needed"  # file -> that file
+//! Stop         = "~/Music/coder-tags/stop"          # dir -> random pick
+//! Notification = "~/Music/coder-tags/notification"  # "input-needed" also accepted (legacy)
 //!
 //! [agents]
 //! Peh = "coder-tags"   # or "off"

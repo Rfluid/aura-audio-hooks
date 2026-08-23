@@ -25,6 +25,12 @@ pub fn aura_config_path() -> PathBuf {
     config_root().join("aura").join("config.toml")
 }
 
+/// Scratch dir for hot-path state (e.g. debounce markers). Not config,
+/// so it lives alongside it rather than in it.
+pub fn state_dir() -> PathBuf {
+    config_root().join("aura-audio-hooks").join("state")
+}
+
 /// Expand a leading `~/` to the home directory.
 pub fn expand_tilde(path: &str) -> PathBuf {
     if let Some(rest) = path.strip_prefix("~/") {

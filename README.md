@@ -14,7 +14,7 @@
 
 ## What it does
 
-You keep folders of sounds ("done", "needs input", …). This plugin
+You keep folders of sounds ("stop", "notification", …). This plugin
 turns them into named **profiles** and lets you choose, per aura agent,
 which profile plays on which hook event — entirely from aura's plugin
 panel:
@@ -120,8 +120,9 @@ One TOML file, also hand-editable:
 muted = false
 
 [profiles.coder-tags.events]
-Stop         = "/home/me/Music/coder-tags/done"           # dir -> random
-Notification = "/home/me/Music/coder-tags/input-needed"
+Stop         = "/home/me/Music/coder-tags/stop"           # dir -> random
+Notification = "/home/me/Music/coder-tags/notification"  # "input-needed" also accepted (legacy)
+SubagentStop = "/home/me/Music/coder-tags/subagent-stop"  # fires per subagent, not per turn
 
 [agents]
 Peh = "coder-tags"
