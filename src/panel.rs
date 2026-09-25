@@ -3,6 +3,11 @@
 //! `indent`/`icon`/`confirm` button capabilities); every
 //! operation the CLI offers is reachable from the panel buttons. See
 //! `actions.rs` for the id grammar.
+//!
+//! Each section also declares keyboard shortcuts (`keys`, needs an aura
+//! build with plugin keys). Aura puts its leader in front, `space` by
+//! default, so `m` is pressed as `space m`. Keys point at the same action
+//! ids as the buttons.
 
 use serde_json::{json, Value};
 
@@ -37,11 +42,30 @@ fn danger_button(id: String, label: &str, confirm: &str) -> Value {
     })
 }
 
+fn key(keys: &str, action: String, label: &str) -> Value {
+    json!({ "keys": keys, "action": action, "label": label })
+}
+
+/// `m` flips the global mute. It points at the button for the other state,
+/// so the key's badge sits on that pill.
+fn mute_key(config: &Config) -> Value {
+    if config.muted {
+        key("m", "mute:off".into(), "Unmute sound")
+    } else {
+        key("m", "mute:on".into(), "Mute sound")
+    }
+}
+
 fn build() -> anyhow::Result<Value> {
     let config = Config::load()?;
     let agents = aura::agents()?;
 
     // ── Agents section: global mute + per-agent profile pills ────────────
+    // Keys: `m` mute, `1`…`9` cycle agent N's profile, `r 1`…`r 9` remove
+    // agent N's hooks (two presses, like the ✕ pill). N counts the agents
+    // that support hooks, top to bottom.
+    let mut agent_keys = vec![mute_key(&config)];
+    let mut agent_number = 0;
     let mut agent_controls = vec![json!({
         "label": "Sound",
         "hint": if config.muted { "muted everywhere" } else { "hooks play sounds" },
@@ -59,6 +83,14 @@ fn build() -> anyhow::Result<Value> {
                 "buttons": [],
             }));
             continue;
+        }
+        agent_number += 1;
+        if agent_number <= 9 {
+            agent_keys.push(key(
+                &agent_number.to_string(),
+                format!("cycle:{}", agent.name),
+                &format!("Next profile for {}", agent.name),
+            ));
         }
         let assigned = config.agents.get(&agent.name).map(String::as_str);
         let installed = Settings::load(&agent.settings_path())
@@ -89,6 +121,13 @@ fn build() -> anyhow::Result<Value> {
             false,
         ));
         if !installed.is_empty() {
+            if agent_number <= 9 {
+                agent_keys.push(key(
+                    &format!("r {agent_number}"),
+                    format!("hooks:{}:remove", agent.name),
+                    &format!("Remove {}'s hooks", agent.name),
+                ));
+            }
             buttons.push(danger_button(
                 format!("hooks:{}:remove", agent.name),
                 "hooks",
@@ -190,6 +229,7 @@ fn build() -> anyhow::Result<Value> {
                 "label": "Agents",
                 "uses_period": false,
                 "type": "controls",
+                "keys": agent_keys,
                 "controls": agent_controls,
             },
             {
@@ -197,6 +237,10 @@ fn build() -> anyhow::Result<Value> {
                 "label": "Profiles",
                 "uses_period": false,
                 "type": "controls",
+                "keys": [
+                    mute_key(&config),
+                    key("n", "profile:new".into(), "New profile from a folder"),
+                ],
                 "controls": profile_controls,
             },
             {
@@ -204,6 +248,7 @@ fn build() -> anyhow::Result<Value> {
                 "label": "About",
                 "uses_period": false,
                 "type": "lines",
+                "keys": [mute_key(&config)],
                 "lines": about,
             },
         ],

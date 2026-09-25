@@ -92,6 +92,20 @@ pub fn use_profile(config: &mut Config, agent_name: &str, profile: &str) -> Resu
     config.save()
 }
 
+/// The assignment after `current` when cycling an agent through its
+/// choices: every profile in name order, then `off`, then round again.
+/// An unknown or missing `current` counts as `off`.
+pub fn next_assignment<'a>(
+    profiles: impl Iterator<Item = &'a str>,
+    current: Option<&str>,
+) -> String {
+    let mut order: Vec<&str> = profiles.collect();
+    order.push(OFF);
+    let current = current.filter(|c| order.contains(c)).unwrap_or(OFF);
+    let i = order.iter().position(|p| *p == current).unwrap_or(0);
+    order[(i + 1) % order.len()].to_string()
+}
+
 pub struct ImportOutcome {
     pub profile: String,
     pub imported: Vec<(String, String)>, // (event, source)
@@ -156,4 +170,25 @@ pub fn import(config: &mut Config, agent_name: &str, profile_name: &str) -> Resu
         skipped,
         events_installed,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn cycles_profiles_then_off() {
+        let profiles = ["alpha", "beta"];
+        let next = |c| next_assignment(profiles.iter().copied(), c);
+        assert_eq!(next(Some("alpha")), "beta");
+        assert_eq!(next(Some("beta")), OFF);
+        assert_eq!(next(Some(OFF)), "alpha");
+        assert_eq!(next(None), "alpha");
+        assert_eq!(next(Some("gone")), "alpha");
+    }
+
+    #[test]
+    fn no_profiles_stays_off() {
+        assert_eq!(next_assignment(std::iter::empty(), None), OFF);
+    }
 }

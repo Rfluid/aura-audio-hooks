@@ -7,6 +7,7 @@
 //!
 //!   mute:on | mute:off
 //!   agent:<agent>:<profile|off>      assign (auto-installs hooks)
+//!   cycle:<agent>                    assign the next profile (then off)
 //!   hooks:<agent>:remove             uninstall managed hook entries
 //!   source:<profile>:<event>:dir     re-pick source via folder dialog
 //!   source:<profile>:<event>:file    re-pick source via file dialog
@@ -38,18 +39,16 @@ pub fn handle(id: &str) -> Result<()> {
             config.muted = false;
             config.save()
         }
-        ["agent", rest @ .., assign] if !rest.is_empty() => {
+        ["agent", rest @ .., profile] if !rest.is_empty() => {
+            assign(&mut config, &rest.join(":"), profile)
+        }
+        ["cycle", rest @ ..] if !rest.is_empty() => {
             let agent_name = rest.join(":");
-            ops::use_profile(&mut config, &agent_name, assign)?;
-            // Selecting a profile means "I want sounds": make sure the
-            // hook entries exist. "off" leaves them installed but silent.
-            if *assign != OFF {
-                let agent = aura::find_agent(&agent_name)?;
-                if !Settings::load(&agent.settings_path())?.has_managed() {
-                    ops::enable(&config, &agent)?;
-                }
-            }
-            Ok(())
+            let next = ops::next_assignment(
+                config.profiles.keys().map(String::as_str),
+                config.agents.get(&agent_name).map(String::as_str),
+            );
+            assign(&mut config, &agent_name, &next)
         }
         ["hooks", rest @ .., "remove"] if !rest.is_empty() => {
             let agent = aura::find_agent(&rest.join(":"))?;
@@ -118,6 +117,20 @@ pub fn handle(id: &str) -> Result<()> {
         }
         _ => bail!("unknown action id '{id}'"),
     }
+}
+
+/// Assign `profile` to the agent. Selecting a profile means "I want
+/// sounds": make sure the hook entries exist. "off" leaves them installed
+/// but silent.
+fn assign(config: &mut Config, agent_name: &str, profile: &str) -> Result<()> {
+    ops::use_profile(config, agent_name, profile)?;
+    if profile != OFF {
+        let agent = aura::find_agent(agent_name)?;
+        if !Settings::load(&agent.settings_path())?.has_managed() {
+            ops::enable(config, &agent)?;
+        }
+    }
+    Ok(())
 }
 
 fn set_event_source(

@@ -19,6 +19,8 @@ tags: [context, architecture]
   `action <id>` re-invocations for button clicks. Interactive `controls`
   sections require an aura build with the `indent`/`icon`/`confirm`
   button capabilities (see `../aura/docs/plugin-authoring.md`).
+  Section `keys` (shortcuts behind aura's plugin leader) need an aura
+  build with plugin keys; older builds ignore the field.
 - **External tools** (runtime, optional): `ffplay`/`pw-play`/`paplay`/
   `mpv` for playback; `zenity`/`kdialog` for native pickers.
 - **Files touched**: own config (`~/.config/aura-audio-hooks/config.toml`),
