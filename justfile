@@ -27,6 +27,13 @@ fix:
 pre-pr:
     ./scripts/pre-pr.sh
 
+# ── Release ───────────────────────────────────────────────────────────────────
+
+# Bump Cargo.toml to the version after the latest vX.Y.Z tag. Flags are
+# forwarded, e.g. `just prepare-release --bump minor` or `--dry-run`.
+prepare-release *args:
+    ./scripts/prepare-release.sh {{args}}
+
 # ── Dev loop ──────────────────────────────────────────────────────────────────
 
 # Print the panel JSON the plugin emits (what aura renders)

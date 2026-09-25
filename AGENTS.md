@@ -30,6 +30,7 @@ need from the workspace below.
 just panel            # render the panel JSON
 just action <id>      # fire a button action headlessly
 just pre-pr           # fmt + clippy -D warnings + test + build
+just prepare-release  # bump Cargo.toml past the latest vX.Y.Z tag
 ./install.sh --link   # symlink install; rebuilds go live immediately
 ```
 
