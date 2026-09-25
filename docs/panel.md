@@ -1,8 +1,8 @@
 ---
 title: Panel UI
 status: stable
-version: 0.1.0
-last_updated: 2026-06-12
+version: 0.2.0
+last_updated: 2026-09-25
 source_refs:
   - src/panel.rs
   - src/actions.rs
@@ -43,6 +43,22 @@ operation is clickable; nothing requires the terminal.
 While a picker dialog is open the panel shows a spinner and aura
 suspends its focus-loss auto-dismiss.
 
+## Keyboard shortcuts
+
+Every key sits behind aura's plugin leader (`space` by default), so `m`
+is pressed as `space m`. Press the leader alone and aura lists the tab's
+keys. Needs an aura build with plugin keys.
+
+| Tab | Keys | Action |
+| --- | ---- | ------ |
+| all | `m` | Mute, or unmute when muted |
+| Agents | `1` … `9` | Next profile for agent N (profiles in name order, then Off) |
+| Agents | `r 1` … `r 9` | Remove agent N's hooks (press twice to confirm) |
+| Profiles | `n` | New profile from a picked folder |
+
+N counts the agents that support hooks, top to bottom. `r N` exists only
+while that agent has hooks installed.
+
 ## Action id grammar
 
 Ids are opaque to aura; this plugin parses them as `:`-separated
@@ -51,6 +67,7 @@ segments (hence no `:` in profile names):
 ```
 mute:on | mute:off
 agent:<agent>:<profile|off>     assign (auto-installs hooks)
+cycle:<agent>                   assign the next profile, then off
 hooks:<agent>:remove            uninstall managed hook entries
 source:<profile>:<event>:dir    re-pick source (folder dialog)
 source:<profile>:<event>:file   re-pick source (file dialog)
